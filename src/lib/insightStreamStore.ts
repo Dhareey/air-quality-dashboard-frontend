@@ -15,7 +15,7 @@
  * so different keys still go one-at-a-time (helps with 429s).
  */
 
-import { runWhenInsightSlotAvailable } from "@/lib/insightStreamQueue";
+import { runStreamSequentially } from "@/lib/requestQueue";
 import {
   buildGenerateInsightUrl,
   type PmHourlyPoint,
@@ -115,7 +115,7 @@ function startStream(key: string, siteId: string, startDate: string, endDate: st
   }
   entry.starting = true;
 
-  runWhenInsightSlotAvailable((release) => {
+  runStreamSequentially((release) => {
     if (entry.subscribers.size === 0) {
       entry.starting = false;
       release();

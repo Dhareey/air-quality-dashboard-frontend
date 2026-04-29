@@ -1,4 +1,5 @@
 import { getDashboardCardsUrl } from "./apiBase";
+import { runSequentially } from "./requestQueue";
 
 const inflight = new Map<string, Promise<DashboardCardsResponse>>();
 
@@ -27,7 +28,7 @@ export interface DashboardCardsResponse {
 export function fetchDashboardCards(siteId: string): Promise<DashboardCardsResponse> {
   const cached = inflight.get(siteId);
   if (cached) return cached;
-  const p = (async () => {
+  const p = runSequentially(async () => {
     const res = await fetch(getDashboardCardsUrl(siteId), {
       headers: { accept: "application/json" },
       cache: "no-store",
@@ -36,7 +37,7 @@ export function fetchDashboardCards(siteId: string): Promise<DashboardCardsRespo
       throw new Error(`dashboard-cards: ${res.status} ${res.statusText}`);
     }
     return (await res.json()) as DashboardCardsResponse;
-  })();
+  });
   inflight.set(siteId, p);
   p.catch(() => {
     inflight.delete(siteId);
