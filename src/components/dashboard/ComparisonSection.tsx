@@ -35,8 +35,6 @@ export function ComparisonSection({
   endDate: string;
 }) {
   const n = siteIds.length;
-  if (n < 2) return null;
-
   const id0 = siteIds[0] ?? "";
   const id1 = siteIds[1] ?? "";
   const id2 = siteIds[2] ?? "";
@@ -45,21 +43,22 @@ export function ComparisonSection({
   const s1 = useInsightStream(id1, startDate, endDate);
   const s2 = useInsightStream(id2, startDate, endDate);
 
-  const streams = n === 3 ? [s0, s1, s2] : [s0, s1];
-  const comparisonSites: ComparisonSiteInput[] = streams.map((st, i) => ({
-    dataKey: `s${i}`,
-    displayName: siteNames[i] ?? siteIds[i] ?? `Site ${i + 1}`,
-    pmHourly: st.pmHourly,
-    aqi: mapStreamReadingsToAqiRecords(st.readings),
-  }));
-  const hasAnyError = streams.some((s) => s.error);
-  const allComplete = streams.every((s) => s.done);
-  const names = siteNames.slice(0, n);
-
   const [compareBullets, setCompareBullets] = useState<string[]>([]);
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareError, setCompareError] = useState<string | null>(null);
 
+  const streams = n < 2 ? null : n === 3 ? [s0, s1, s2] : [s0, s1];
+  const comparisonSites: ComparisonSiteInput[] = streams
+    ? streams.map((st, i) => ({
+        dataKey: `s${i}`,
+        displayName: siteNames[i] ?? siteIds[i] ?? `Site ${i + 1}`,
+        pmHourly: st.pmHourly,
+        aqi: mapStreamReadingsToAqiRecords(st.readings),
+      }))
+    : [];
+  const hasAnyError = Boolean(streams?.some((s) => s.error));
+  const allComplete = Boolean(streams?.length && streams.every((s) => s.done));
+  const names = siteNames.slice(0, n);
   const siteNamesKey = JSON.stringify(names);
 
   useEffect(() => {
@@ -114,6 +113,8 @@ export function ComparisonSection({
     // s0/s1/s2: intentionally omitted from deps to avoid re-fetch every render; they match the run when allComplete / selection changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allComplete, hasAnyError, n, startDate, endDate, id0, id1, id2, siteNamesKey]);
+
+  if (n < 2) return null;
 
   return (
     <section className="space-y-6 border-t border-border pt-8">

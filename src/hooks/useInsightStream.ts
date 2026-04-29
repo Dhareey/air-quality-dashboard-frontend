@@ -23,7 +23,6 @@ export function useInsightStream(
   readings: StreamReading[];
   done: boolean;
   error: string | null;
-  open: boolean;
 } {
   const [totalRecords, setTotalRecords] = useState<number | null>(null);
   const [pmHourly, setPmHourly] = useState<PmHourlyPoint[]>([]);
