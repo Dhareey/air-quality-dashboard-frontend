@@ -48,8 +48,8 @@ export function SiteReportBlock({
   layoutBreakpoint?: LayoutBp;
 }) {
   const bp = layoutBreakpoint;
-  const insight = useInsightStream(siteId, startDate, endDate);
   const dashboardCards = useDashboardCards(siteId);
+  const insight = useInsightStream(siteId, startDate, endDate);
 
   const tableData = useMemo(
     () => mapStreamReadingsToAqiRecords(insight.readings),
