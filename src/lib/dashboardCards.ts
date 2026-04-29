@@ -1,5 +1,7 @@
 import { getDashboardCardsUrl } from "./apiBase";
 
+const inflight = new Map<string, Promise<DashboardCardsResponse>>();
+
 export interface AqiRangeBand {
   min: number;
   max: number | null;
@@ -22,15 +24,24 @@ export interface DashboardCardsResponse {
   pm_10: number;
 }
 
-export async function fetchDashboardCards(siteId: string): Promise<DashboardCardsResponse> {
-  const res = await fetch(getDashboardCardsUrl(siteId), {
-    headers: { accept: "application/json" },
-    cache: "no-store",
+export function fetchDashboardCards(siteId: string): Promise<DashboardCardsResponse> {
+  const cached = inflight.get(siteId);
+  if (cached) return cached;
+  const p = (async () => {
+    const res = await fetch(getDashboardCardsUrl(siteId), {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!res.ok) {
+      throw new Error(`dashboard-cards: ${res.status} ${res.statusText}`);
+    }
+    return (await res.json()) as DashboardCardsResponse;
+  })();
+  inflight.set(siteId, p);
+  p.catch(() => {
+    inflight.delete(siteId);
   });
-  if (!res.ok) {
-    throw new Error(`dashboard-cards: ${res.status} ${res.statusText}`);
-  }
-  return res.json() as Promise<DashboardCardsResponse>;
+  return p;
 }
 
 /** API often returns hex without # — normalize for CSS */
