@@ -1,0 +1,26 @@
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env (NEXT_PUBLIC_API_BASE in .env.local — do not commit secrets; see .env.example)
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+
+# misc
+.DS_Store
+*.pem
+.tsbuildinfo
+*.tsbuildinfo
