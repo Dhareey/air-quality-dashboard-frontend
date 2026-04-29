@@ -1,14 +1,19 @@
 /**
- * Single global queue. All requests routed through it run **one at a time**,
- * with a small spacing delay between jobs to avoid backend 429s.
+ * Single global queue. Every request the app makes goes through this so that
+ * no two backend calls are ever in flight at the same time. After each job
+ * finishes (or errors), we wait `QUEUE_SPACING_MS` before the next job is
+ * allowed to run, which keeps the backend from rate-limiting (HTTP 429).
  *
- * Two helpers:
- * - `runSequentially(fn)`: for promise-based requests (e.g. `fetch`).
- * - `runStreamSequentially(start)`: for callback-based work like SSE. The
- *   caller MUST invoke `done` exactly once when the work is finished
- *   (complete, error, or abort) so the chain can advance.
+ * Helpers:
+ * - `runSequentially(fn)`: promise-based work (e.g. `fetch`).
+ * - `runStreamSequentially(start)`: callback-based work (e.g. EventSource).
+ *   The caller MUST call `done` exactly once when the work is finished so
+ *   the chain can advance.
+ * - `fetchWithBackoff(input, init)`: drop-in `fetch` that retries on HTTP
+ *   429 with exponential backoff (use INSIDE a queued job).
  */
-const QUEUE_SPACING_MS = 1000;
+const QUEUE_SPACING_MS = 1500;
+const RETRY_DELAYS_MS = [1000, 2500, 5000];
 
 let chain: Promise<unknown> = Promise.resolve();
 
@@ -44,4 +49,22 @@ export function runStreamSequentially(start: (done: () => void) => void): void {
       })
   );
   chain = appendSpacer(work);
+}
+
+export async function fetchWithBackoff(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  let last: Response | null = null;
+  for (let i = 0; i <= RETRY_DELAYS_MS.length; i++) {
+    const res = await fetch(input, init);
+    if (res.status !== 429) return res;
+    last = res;
+    if (i === RETRY_DELAYS_MS.length) return res;
+    const retryAfterRaw = res.headers.get("Retry-After");
+    const retryAfter = retryAfterRaw ? parseFloat(retryAfterRaw) : 0;
+    const wait = retryAfter > 0 ? retryAfter * 1000 : RETRY_DELAYS_MS[i]!;
+    await delay(wait);
+  }
+  return last!;
 }

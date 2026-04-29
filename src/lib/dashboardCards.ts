@@ -1,5 +1,5 @@
 import { getDashboardCardsUrl } from "./apiBase";
-import { runSequentially } from "./requestQueue";
+import { fetchWithBackoff, runSequentially } from "./requestQueue";
 
 const inflight = new Map<string, Promise<DashboardCardsResponse>>();
 
@@ -29,7 +29,7 @@ export function fetchDashboardCards(siteId: string): Promise<DashboardCardsRespo
   const cached = inflight.get(siteId);
   if (cached) return cached;
   const p = runSequentially(async () => {
-    const res = await fetch(getDashboardCardsUrl(siteId), {
+    const res = await fetchWithBackoff(getDashboardCardsUrl(siteId), {
       headers: { accept: "application/json" },
       cache: "no-store",
     });

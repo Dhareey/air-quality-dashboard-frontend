@@ -1,4 +1,5 @@
 import { getFilterConfigUrl } from "./apiBase";
+import { fetchWithBackoff, runSequentially } from "./requestQueue";
 
 /** Resolves to `{API_BASE}/filter_config` (see `NEXT_PUBLIC_API_BASE` in `apiBase.ts`). */
 export const FILTER_CONFIG_URL = getFilterConfigUrl();
@@ -66,13 +67,15 @@ export function mergeFilterConfigResponse(raw: FilterConfigResponse | null | und
   return { nigeria, ghana };
 }
 
-export async function fetchFilterConfig(
+export function fetchFilterConfig(
   url: string = FILTER_CONFIG_URL
 ): Promise<MergedFilterConfig> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) throw new Error(`filter_config: ${res.status} ${res.statusText}`);
-  const data = (await res.json()) as FilterConfigResponse;
-  return mergeFilterConfigResponse(data);
+  return runSequentially(async () => {
+    const res = await fetchWithBackoff(url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`filter_config: ${res.status} ${res.statusText}`);
+    const data = (await res.json()) as FilterConfigResponse;
+    return mergeFilterConfigResponse(data);
+  });
 }
 
 type CountryFilter = "Nigeria" | "Ghana" | "Both";
