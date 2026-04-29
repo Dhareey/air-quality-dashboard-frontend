@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { FilterPanel, DEFAULT_FILTERS, type FiltersState } from "@/components/dashboard/FilterPanel";
+import { FilterPanel, getDefaultFilters, type FiltersState } from "@/components/dashboard/FilterPanel";
 import { SelectSitesReportPrompt, SiteReportBlock } from "@/components/dashboard/SiteReportPanel";
 import { ComparisonSection } from "@/components/dashboard/ComparisonSection";
 import { useFilterConfig } from "@/hooks/useFilterConfig";
 import { getSiteDisplayName } from "@/lib/filterConfig";
 
 export function DashboardPage() {
-  const [filters, setFilters] = useState<FiltersState>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<FiltersState>(() => getDefaultFilters());
   const { config, loading, error } = useFilterConfig();
 
   return (
@@ -30,7 +30,7 @@ export function DashboardPage() {
           value={filters}
           onChange={setFilters}
           onApply={() => {}}
-          onReset={() => setFilters(DEFAULT_FILTERS)}
+          onReset={() => setFilters(getDefaultFilters())}
           config={config}
           configLoading={loading}
           configError={error}

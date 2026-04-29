@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { MOCK_REFERENCE_DATE } from "@/lib/aqi";
 import {
   type MergedFilterConfig,
   listRegionOptions,
@@ -30,15 +29,35 @@ export interface FiltersState {
   sites: string[];
 }
 
-const REF_MS = MOCK_REFERENCE_DATE.getTime();
+const DATA_LOOKBACK_DAYS = 31;
 
-export const DEFAULT_FILTERS: FiltersState = {
-  country: "Both",
-  startDate: new Date(REF_MS - 30 * 86400000).toISOString().slice(0, 10),
-  endDate: new Date(REF_MS).toISOString().slice(0, 10),
-  region: "all",
-  sites: [],
-};
+/** YYYY-MM-DD in local time */
+function toYmd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function oldestSelectableYmd() {
+  const d = new Date();
+  d.setDate(d.getDate() - DATA_LOOKBACK_DAYS);
+  return toYmd(d);
+}
+
+function todayYmd() {
+  return toYmd(new Date());
+}
+
+export function getDefaultFilters(): FiltersState {
+  return {
+    country: "Both",
+    startDate: oldestSelectableYmd(),
+    endDate: todayYmd(),
+    region: "all",
+    sites: [],
+  };
+}
 
 interface Props {
   value: FiltersState;
@@ -88,6 +107,22 @@ export function FilterPanel({
     [siteOptions, draft.sites]
   );
   const atSiteCap = draft.sites.length >= 3;
+
+  const dataMinYmd = oldestSelectableYmd();
+  const dataMaxYmd = todayYmd();
+
+  const dateRangeError = (() => {
+    if (draft.startDate < dataMinYmd || draft.endDate < dataMinYmd) {
+      return `Dates must be on or after ${dataMinYmd} (oldest available).`;
+    }
+    if (draft.startDate > dataMaxYmd || draft.endDate > dataMaxYmd) {
+      return `Dates must be on or before ${dataMaxYmd} (today).`;
+    }
+    if (draft.startDate >= draft.endDate) {
+      return "Start date must be before end date.";
+    }
+    return null;
+  })();
 
   useEffect(() => {
     if (siteOptions.length === 0) return;
@@ -164,13 +199,25 @@ export function FilterPanel({
               <Input
                 type="date"
                 value={draft.startDate}
+                min={dataMinYmd}
+                max={dataMaxYmd}
                 onChange={(e) => set("startDate", e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label>End date</Label>
-              <Input type="date" value={draft.endDate} onChange={(e) => set("endDate", e.target.value)} />
+              <Input
+                type="date"
+                value={draft.endDate}
+                min={dataMinYmd}
+                max={dataMaxYmd}
+                onChange={(e) => set("endDate", e.target.value)}
+              />
             </div>
+            {dateRangeError && <p className="text-xs text-destructive">{dateRangeError}</p>}
+            <p className="text-[11px] text-muted-foreground">
+              Data is available for the last {DATA_LOOKBACK_DAYS} days.
+            </p>
 
             <div className="space-y-2">
               <Label>Region</Label>
@@ -195,12 +242,9 @@ export function FilterPanel({
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between gap-2">
-                <Label className="text-xs">Sites</Label>
+                <Label className="text-xs">Site (Up to 3)</Label>
                 <span className="text-[11px] tabular-nums text-muted-foreground">{draft.sites.length}/3</span>
               </div>
-              <p className="text-[11px] leading-tight text-muted-foreground">
-                Select at least one site, then Apply, to load reports (up to 3).
-              </p>
               <Select
                 key={siteAddKey}
                 disabled={
@@ -281,8 +325,9 @@ export function FilterPanel({
               variant="outline"
               className="flex-1"
               onClick={() => {
-                setDraft(DEFAULT_FILTERS);
-                onChange(DEFAULT_FILTERS);
+                const next = getDefaultFilters();
+                setDraft(next);
+                onChange(next);
                 onReset();
               }}
             >
@@ -290,12 +335,14 @@ export function FilterPanel({
             </Button>
             <Button
               className="flex-1"
+              disabled={Boolean(dateRangeError)}
               onClick={() => {
+                if (dateRangeError) return;
                 onChange(draft);
                 onApply();
               }}
             >
-              Apply
+              Report
             </Button>
           </div>
         </div>

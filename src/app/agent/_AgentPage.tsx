@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { FilterPanel, DEFAULT_FILTERS, type FiltersState } from "@/components/dashboard/FilterPanel";
-import { SelectSitesReportPrompt, SiteReportBlock } from "@/components/dashboard/SiteReportPanel";
-import { ComparisonSection } from "@/components/dashboard/ComparisonSection";
+import { FilterPanel, getDefaultFilters, type FiltersState } from "@/components/dashboard/FilterPanel";
 import { AgentChat } from "@/components/agent/AgentChat";
 import { useFilterConfig } from "@/hooks/useFilterConfig";
-import { getSiteDisplayName } from "@/lib/filterConfig";
 
 export function AgentPage() {
-  const [filters, setFilters] = useState<FiltersState>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<FiltersState>(() => getDefaultFilters());
   const { config, loading, error } = useFilterConfig();
   const [chatCollapsed, setChatCollapsed] = useState(false);
 
@@ -19,7 +16,7 @@ export function AgentPage() {
       <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border bg-card/80 px-6 backdrop-blur">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Air Quality Agent</h1>
-          <p className="text-sm text-muted-foreground">Ask questions, refine filters, and explore the data interactively</p>
+          <p className="text-sm text-muted-foreground">Coming soon</p>
         </div>
       </header>
 
@@ -29,36 +26,18 @@ export function AgentPage() {
           value={filters}
           onChange={setFilters}
           onApply={() => {}}
-          onReset={() => setFilters(DEFAULT_FILTERS)}
+          onReset={() => setFilters(getDefaultFilters())}
           config={config}
           configLoading={loading}
           configError={error}
         />
-        <main className="min-w-0 flex-1 space-y-6 p-6">
-          {filters.sites.length === 0 ? (
-            <SelectSitesReportPrompt />
-          ) : (
-            <>
-              {filters.sites.map((siteId) => (
-                <SiteReportBlock
-                  key={siteId}
-                  siteId={siteId}
-                  siteName={getSiteDisplayName(config, siteId) ?? siteId}
-                  startDate={filters.startDate}
-                  endDate={filters.endDate}
-                  layoutBreakpoint="2xl"
-                />
-              ))}
-              {filters.sites.length >= 2 && (
-                <ComparisonSection
-                  siteIds={filters.sites}
-                  siteNames={filters.sites.map((id) => getSiteDisplayName(config, id) ?? id)}
-                  startDate={filters.startDate}
-                  endDate={filters.endDate}
-                />
-              )}
-            </>
-          )}
+        <main className="min-w-0 flex-1 p-6">
+          <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 py-16 text-center">
+            <h2 className="text-lg font-semibold text-foreground">Coming soon</h2>
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+              The interactive agent experience is under development. Check back later.
+            </p>
+          </div>
         </main>
       </div>
     </AppShell>

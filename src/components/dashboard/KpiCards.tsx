@@ -9,14 +9,12 @@ import { cn } from "@/lib/utils";
 function Card({
   label,
   value,
-  hint,
   Icon,
   tone,
   valueClassName,
 }: {
   label: string;
   value: ReactNode;
-  hint: string;
   Icon: LucideIcon;
   tone: "primary" | "good" | "unhealthy" | "muted" | "info";
   /** Override value typography (e.g. long IDs) */
@@ -42,7 +40,6 @@ function Card({
           >
             {value}
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
         </div>
         <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${toneMap[tone]}`}>
           <Icon className="h-5 w-5" />
@@ -88,7 +85,7 @@ export function KpiCards({
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={i}
-            className="h-[7.5rem] animate-pulse rounded-xl border border-border bg-muted/40 p-5"
+            className="h-[5.5rem] animate-pulse rounded-xl border border-border bg-muted/40 p-5"
           />
         ))}
       </div>
@@ -104,28 +101,24 @@ export function KpiCards({
       <Card
         label="PM2.5"
         value={`${data.pm2_5_value.toFixed(2)} µg/m³`}
-        hint={`Time: ${data.time ? new Date(data.time).toLocaleString() : "—"}`}
         Icon={Activity}
         tone="muted"
       />
       <Card
         label="PM10"
         value={Number.isFinite(data.pm_10) ? `${data.pm_10.toFixed(2)} µg/m³` : dash()}
-        hint="From dashboard-cards API"
         Icon={Activity}
         tone="info"
       />
       <Card
         label="AQI category"
         value={data.aqi_category}
-        hint="From API"
         Icon={Type}
         tone="good"
       />
       <Card
         label="site_id"
         value={data.site_id}
-        hint="From API"
         Icon={Tag}
         tone="muted"
         valueClassName="text-xs font-mono font-normal sm:text-sm break-all [overflow-wrap:anywhere]"
@@ -138,14 +131,12 @@ export function KpiCards({
             <span className="font-mono text-sm">{data.aqi_color}</span>
           </span>
         }
-        hint="Raw hex from API"
         Icon={Palette}
         tone="info"
       />
       <Card
         label="aqi_color_name"
         value={data.aqi_color_name}
-        hint="From API"
         Icon={Palette}
         tone="muted"
       />
@@ -156,14 +147,12 @@ export function KpiCards({
             ? totalRecordCount.toLocaleString()
             : dash()
         }
-        hint={totalRecordCount != null ? "From generate_insight stream" : "Waiting for total_records event"}
         Icon={Database}
         tone="primary"
       />
       <Card
         label="device_id"
         value={data.device_id}
-        hint="From API"
         Icon={Cpu}
         tone="muted"
         valueClassName="text-xs font-mono font-normal sm:text-sm break-all [overflow-wrap:anywhere]"

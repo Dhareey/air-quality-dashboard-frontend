@@ -95,7 +95,7 @@ export function PM25LineChart({
     ? mode === "daily"
       ? "Daily mean PM2.5 from the hourly series"
       : "Each point is an hourly sample from the stream"
-    : "Daily average over the selected period";
+    : "Daily/Hourly reading over the selected period";
 
   return (
     <Panel
@@ -245,14 +245,14 @@ export function CategoryPie({
 
   if (series.length === 0) {
     return (
-      <Panel title="AQI Category Distribution" subtitle="Share of readings per category">
+      <Panel title="AQI Category Distribution" subtitle="Category distribution count">
         <p className="text-sm text-muted-foreground">No category data yet.</p>
       </Panel>
     );
   }
 
   return (
-    <Panel title="AQI Category Distribution" subtitle="Share of readings per category">
+    <Panel title="AQI Category Distribution" subtitle="Category distribution count">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie data={series} dataKey="value" nameKey="name" innerRadius={50} outerRadius={85} paddingAngle={2}>
